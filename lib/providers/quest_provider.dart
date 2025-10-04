@@ -9,15 +9,13 @@ class QuestProvider extends ChangeNotifier {
   Future<void> loadQuests() async {
     _quests = [
       QuestModel(id: '1', title: 'Memory Match', type: 'memory'),
-      //QuestModel(id: '2', title: 'Sound Safari', type: 'sound'),
-      QuestModel(id: '3', title: 'Logic Maze', type: 'logic'),
-      QuestModel(id: '4', title: 'Math Puzzles', type: 'math'),
-      QuestModel(id: '5', title: 'Word Hunt', type: 'word'),
-      //QuestModel(id: '6', title: 'Visual Riddles', type: 'visual'),
-      QuestModel(id: '7', title: 'Pattern Recognition', type: 'pattern'),
-      QuestModel(id: '8', title: 'Color Sequence', type: 'color'),
-      //QuestModel(id: '9', title: 'Spatial Reasoning', type: 'spatial'),
-      //QuestModel(id: '10', title: 'Rhythm Tap', type: 'rhythm'),
+      QuestModel(id: '2', title: 'Math Puzzles', type: 'math'),
+      QuestModel(id: '3', title: 'Word Hunt', type: 'word'),
+      QuestModel(id: '4', title: 'Pattern Recognition', type: 'pattern'),
+      QuestModel(id: '5', title: 'Color Sequence', type: 'color'),
+      //QuestModel(id: '6', title: 'Color Catch', type: 'colour_catch'),
+      //QuestModel(id: '7', title: 'Logic Maze', type: 'logic'),
+      QuestModel(id: '8', title: 'Shape Snap', type: 'shape_snap'),
     ];
     notifyListeners();
   }

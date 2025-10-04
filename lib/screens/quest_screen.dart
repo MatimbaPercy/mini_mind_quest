@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mini_mind_quest/games/color_sequence_game.dart';
-import 'package:mini_mind_quest/games/logic_maze_game.dart';
 import 'package:mini_mind_quest/games/math_puzzles_game.dart';
 import 'package:mini_mind_quest/games/memory_match_game.dart';
 import 'package:mini_mind_quest/games/pattern_recognition_game.dart';
+import 'package:mini_mind_quest/games/shape_snap_game.dart';
 import 'package:mini_mind_quest/games/word_hunt_game.dart';
 import 'package:mini_mind_quest/helpers/adHelper.dart';
 import 'package:mini_mind_quest/models/quest_model.dart';
@@ -32,23 +32,23 @@ class QuestScreen extends StatelessWidget {
     switch (quest.type) {
       case 'memory':
         return MemoryMatchGame(onCompleted: () => _onQuestCompleted(context));
-      case 'logic':
-        return LogicMazeGame(onCompleted: () => _onQuestCompleted(context));
       case 'color':
         return ColorSequenceGame(onCompleted: () => _onQuestCompleted(context));
       case 'word':
         return WordHuntGame(onCompleted: () => _onQuestCompleted(context));
-      // You can add other game types here in the future
       case 'math':
         return MathPuzzlesGame(onCompleted: () => _onQuestCompleted(context));
       case 'pattern':
         return PatternRecognitionGame(
           onCompleted: () => _onQuestCompleted(context),
         );
-      // case 'sound':
-      //   return SoundSafariGame(onCompleted: () => _onQuestCompleted(context));
+      //case 'colour_catch':
+      //return ColourCatchGame(onCompleted: () => _onQuestCompleted(context));
+      //case 'logic':
+      //return LogicMazeGame(onCompleted: () => _onQuestCompleted(context));
+      //case 'shape_snap':
+      //return ShapeSnapGame(onCompleted: () => _onQuestCompleted(context));
       default:
-        // Placeholder for other games
         return Center(
           child: ElevatedButton(
             child: const Text('Complete Quest'),

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class WordHuntGame extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -47,7 +48,6 @@ class _WordHuntGameState extends State<WordHuntGame> {
   final Set<_GridIndex> _foundIndices = {};
   bool _isDragging = false;
   final GlobalKey _gridKey = GlobalKey();
-
   final List<Color> _letterColors = [
     Colors.red,
     Colors.blue,
@@ -59,11 +59,16 @@ class _WordHuntGameState extends State<WordHuntGame> {
   late ConfettiController _confettiController;
   InterstitialAd? _interstitialAd;
 
+  // Audio
+  final AudioPlayer _bgmPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  bool _isMuted = false;
+
   @override
   void initState() {
     super.initState();
     _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 10),
     );
     _startNewGame();
   }
@@ -72,7 +77,23 @@ class _WordHuntGameState extends State<WordHuntGame> {
   void dispose() {
     _confettiController.dispose();
     _interstitialAd?.dispose();
+    _bgmPlayer.dispose();
+    _sfxPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playSound(String file) async {
+    if (_isMuted) return;
+    await _sfxPlayer.play(AssetSource('sounds/$file'));
+  }
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+      if (_isMuted) {
+        _bgmPlayer.stop();
+      }
+    });
   }
 
   void _startNewGame() {
@@ -89,6 +110,7 @@ class _WordHuntGameState extends State<WordHuntGame> {
     _isDragging = true;
     _currentSelection.clear();
     _updateSelection(details.localPosition);
+    _playSound('tap.mp3');
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -104,20 +126,29 @@ class _WordHuntGameState extends State<WordHuntGame> {
         _currentSelection.map((index) => _grid[index.row][index.col]).join();
     String reversedSelectedWord = selectedWord.split('').reversed.join();
 
+    bool correct = false;
     if (_sessionWords.contains(selectedWord) &&
         !_foundWords.contains(selectedWord)) {
       _foundWords.add(selectedWord);
-      _foundIndices.addAll(_currentSelection);
+      correct = true;
     } else if (_sessionWords.contains(reversedSelectedWord) &&
         !_foundWords.contains(reversedSelectedWord)) {
       _foundWords.add(reversedSelectedWord);
+      correct = true;
+    }
+
+    if (correct) {
       _foundIndices.addAll(_currentSelection);
+      _playSound('correct.mp3');
+    } else {
+      _playSound('wrong.mp3');
     }
 
     setState(() => _currentSelection.clear());
 
     if (_foundWords.length == _sessionWords.length) {
       _confettiController.play();
+      _playSound('victory.mp3');
       Future.delayed(const Duration(milliseconds: 800), () async {
         if (mounted) widget.onCompleted();
       });
@@ -215,6 +246,7 @@ class _WordHuntGameState extends State<WordHuntGame> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // Background gradient
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -343,6 +375,18 @@ class _WordHuntGameState extends State<WordHuntGame> {
               Colors.yellow,
               Colors.purple,
             ],
+          ),
+        ),
+        Positioned(
+          top: 40,
+          right: 20,
+          child: IconButton(
+            icon: Icon(
+              _isMuted ? Icons.volume_off : Icons.volume_up,
+              color: Colors.white,
+              size: 30,
+            ),
+            onPressed: _toggleMute,
           ),
         ),
       ],

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class PatternRecognitionGame extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -26,6 +27,11 @@ class _PatternRecognitionGameState extends State<PatternRecognitionGame> {
   bool _isProcessing = false;
   late ConfettiController _confettiController;
   InterstitialAd? _interstitialAd;
+
+  // Audio
+  final AudioPlayer _bgmPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  bool _isMuted = false;
 
   final List<IconData> _iconPool = [
     Icons.star,
@@ -54,7 +60,7 @@ class _PatternRecognitionGameState extends State<PatternRecognitionGame> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 10),
     );
     _generateProblem();
   }
@@ -63,7 +69,15 @@ class _PatternRecognitionGameState extends State<PatternRecognitionGame> {
   void dispose() {
     _confettiController.dispose();
     _interstitialAd?.dispose();
+    _bgmPlayer.dispose();
+    _sfxPlayer.dispose();
     super.dispose();
+  }
+
+  // 🔊 Play sound effects
+  Future<void> _playSound(String file) async {
+    if (_isMuted) return;
+    await _sfxPlayer.play(AssetSource('sounds/$file'));
   }
 
   void _generateProblem() {
@@ -89,25 +103,40 @@ class _PatternRecognitionGameState extends State<PatternRecognitionGame> {
       _isProcessing = true;
     });
 
+    _playSound("tap.mp3");
+
     if (index == _oddIconIndex) {
+      _playSound("correct.mp3");
       setState(() => _score++);
 
       if (_score >= _winScore) {
         _confettiController.play();
-        await Future.delayed(const Duration(seconds: 1));
+        _playSound("victory.mp3");
+        await Future.delayed(const Duration(seconds: 2));
         if (mounted) widget.onCompleted();
       } else {
         Future.delayed(const Duration(milliseconds: 500), _generateProblem);
       }
     } else {
+      _playSound("wrong.mp3");
       Future.delayed(const Duration(milliseconds: 500), _generateProblem);
     }
+  }
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+      if (_isMuted) {
+        _bgmPlayer.stop();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // Background gradient
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -194,6 +223,7 @@ class _PatternRecognitionGameState extends State<PatternRecognitionGame> {
             ],
           ),
         ),
+        // 🎉 Confetti
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
@@ -207,6 +237,19 @@ class _PatternRecognitionGameState extends State<PatternRecognitionGame> {
               Colors.yellow,
               Colors.purple,
             ],
+          ),
+        ),
+        // 🔇 Mute Button
+        Positioned(
+          top: 40,
+          right: 20,
+          child: IconButton(
+            icon: Icon(
+              _isMuted ? Icons.volume_off : Icons.volume_up,
+              color: Colors.white,
+              size: 30,
+            ),
+            onPressed: _toggleMute,
           ),
         ),
       ],

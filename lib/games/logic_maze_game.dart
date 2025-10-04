@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class LogicMazeGame extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -23,11 +24,16 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
   late ConfettiController _confettiController;
   InterstitialAd? _interstitialAd;
 
+  // 🎵 Audio
+  final AudioPlayer _bgPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  bool _isMuted = false;
+
   @override
   void initState() {
     super.initState();
     _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 10),
     );
     _generateMazeDFS();
   }
@@ -36,9 +42,27 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
   void dispose() {
     _confettiController.dispose();
     _interstitialAd?.dispose();
+    _bgPlayer.stop();
+    _bgPlayer.dispose();
+    _sfxPlayer.dispose();
     super.dispose();
   }
 
+  // 🔊 Play effect
+  Future<void> _playSound(String file) async {
+    if (!_isMuted) {
+      await _sfxPlayer.play(AssetSource('sounds/$file'));
+    }
+  }
+
+  void _toggleMute() {
+    setState(() => _isMuted = !_isMuted);
+    if (_isMuted) {
+      _bgPlayer.pause();
+    }
+  }
+
+  // 🌀 Maze generation
   void _generateMazeDFS() {
     _maze = List.generate(rows, (_) => List.filled(cols, 1));
     final random = Random();
@@ -71,11 +95,10 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
 
     dfs(0, 0);
 
-    // Add extra random connections to allow multiple paths
+    // Extra random connections
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
         if (_maze[i][j] == 1 && random.nextDouble() < 0.1) {
-          // 10% chance
           final neighbors = [
             [i - 1, j],
             [i + 1, j],
@@ -103,32 +126,42 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
     _maze[rows - 1][cols - 1] = 3; // Goal
   }
 
+  // 🚶 Move player
   void _movePlayer(int rowOffset, int colOffset) {
     int newRow = _playerRow + rowOffset;
     int newCol = _playerCol + colOffset;
 
-    if (newRow >= 0 &&
-        newRow < _maze.length &&
-        newCol >= 0 &&
-        newCol < _maze[0].length &&
-        _maze[newRow][newCol] != 1) {
-      setState(() {
-        _maze[_playerRow][_playerCol] = 0;
-        _playerRow = newRow;
-        _playerCol = newCol;
-
-        if (_maze[_playerRow][_playerCol] == 3) {
-          _maze[_playerRow][_playerCol] = 2;
-          _handleCompletion();
-        } else {
-          _maze[_playerRow][_playerCol] = 2;
-        }
-      });
+    // ❌ Wrong move (into a wall)
+    if (newRow < 0 ||
+        newRow >= _maze.length ||
+        newCol < 0 ||
+        newCol >= _maze[0].length ||
+        _maze[newRow][newCol] == 1) {
+      _playSound("wrong.mp3"); // 🔊 Wrong move
+      return;
     }
+
+    // ✅ Valid move
+    setState(() {
+      _maze[_playerRow][_playerCol] = 0;
+      _playerRow = newRow;
+      _playerCol = newCol;
+
+      if (_maze[_playerRow][_playerCol] == 3) {
+        _maze[_playerRow][_playerCol] = 2;
+        _handleCompletion();
+      } else {
+        _maze[_playerRow][_playerCol] = 2;
+      }
+    });
+
+    _playSound("tap.mp3"); // 🔊 Tap sound
   }
 
+  // 🎉 Completion
   void _handleCompletion() async {
     _confettiController.play();
+    _playSound("correct.mp3");
     await Future.delayed(const Duration(milliseconds: 1000));
     if (mounted) widget.onCompleted();
   }
@@ -189,7 +222,7 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background gradient
+        // 🎨 Background
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -204,7 +237,7 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
           ),
         ),
 
-        // Main content with padding
+        // 🎮 Main Game
         Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -257,7 +290,7 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
           ),
         ),
 
-        // Confetti
+        // 🎊 Confetti
         Align(
           alignment: Alignment.center,
           child: ConfettiWidget(
@@ -272,6 +305,20 @@ class _LogicMazeGameState extends State<LogicMazeGame> {
               Colors.purple,
               Colors.orange,
             ],
+          ),
+        ),
+
+        // 🔇 Mute button
+        Positioned(
+          top: 40,
+          right: 20,
+          child: IconButton(
+            icon: Icon(
+              _isMuted ? Icons.volume_off : Icons.volume_up,
+              color: Colors.white,
+              size: 32,
+            ),
+            onPressed: _toggleMute,
           ),
         ),
       ],

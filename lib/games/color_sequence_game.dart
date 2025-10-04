@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mini_mind_quest/helpers/sound_manager.dart';
 
 class ColorSequenceGame extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -44,7 +45,7 @@ class _ColorSequenceGameState extends State<ColorSequenceGame> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 10),
     );
     _nextLevel();
   }
@@ -84,6 +85,10 @@ class _ColorSequenceGameState extends State<ColorSequenceGame> {
     for (final color in _sequence) {
       if (!mounted) return;
       setState(() => _litColor = color);
+
+      // play tap sound for flashing sequence
+      SoundManager.playTap();
+
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
       setState(() => _litColor = null);
@@ -100,10 +105,12 @@ class _ColorSequenceGameState extends State<ColorSequenceGame> {
   void _onColorTapped(Color color) {
     if (!_isPlayerTurn) return;
 
+    SoundManager.playTap();
     _playerSequence.add(color);
     int currentIndex = _playerSequence.length - 1;
 
     if (_playerSequence[currentIndex] != _sequence[currentIndex]) {
+      SoundManager.playWrong();
       if (!mounted) return;
       setState(() => _message = 'Oops! Try again.');
       _isPlayerTurn = false;
@@ -119,10 +126,10 @@ class _ColorSequenceGameState extends State<ColorSequenceGame> {
         _confettiController.play();
         setState(() => _message = 'You Win!');
         Future.delayed(const Duration(milliseconds: 1500), () async {
-
           if (mounted) widget.onCompleted();
         });
       } else {
+        SoundManager.playCorrect();
         setState(() => _message = 'Correct!');
         Future.delayed(const Duration(milliseconds: 1000), () {
           if (mounted) _nextLevel();
@@ -153,6 +160,19 @@ class _ColorSequenceGameState extends State<ColorSequenceGame> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // mute/unmute button
+              IconButton(
+                icon: Icon(
+                  SoundManager.isMuted ? Icons.volume_off : Icons.volume_up,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                onPressed: () {
+                  setState(() {});
+                },
+              ),
+              const SizedBox(height: 20),
+
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child: Text(

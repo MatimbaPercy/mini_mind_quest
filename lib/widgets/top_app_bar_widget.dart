@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TopAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title; // this will be quest.title
+  final String title;
 
   const TopAppBar({super.key, required this.title});
 
@@ -10,31 +10,49 @@ class TopAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Column(
         children: [
+          // 🎨 Fun title
           Text(
-            title, // 👈 now using quest.title here
+            title,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
+              color: Colors.deepPurple,
               fontWeight: FontWeight.bold,
+              fontSize: 22,
+              shadows: [
+                Shadow(
+                  color: Colors.pinkAccent.withOpacity(0.5),
+                  offset: const Offset(2, 2),
+                  blurRadius: 3,
+                ),
+              ],
             ),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 2),
+          // 🧠 Subtitle for encouragement
           Text(
-            'Sharpen your mind, one quest at a time.',
+            'Sharpen your mind, one quest at a time!',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+              color: Colors.orangeAccent.withOpacity(0.9),
               fontStyle: FontStyle.italic,
               fontSize: 13,
+              shadows: [
+                Shadow(
+                  color: Colors.yellowAccent.withOpacity(0.4),
+                  offset: const Offset(1, 1),
+                  blurRadius: 2,
+                ),
+              ],
             ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
       centerTitle: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      elevation: 0, // flat modern look
+      backgroundColor: Colors.yellow.shade100, // soft kid-friendly background
+      elevation: 4,
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 4);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 10);
 }

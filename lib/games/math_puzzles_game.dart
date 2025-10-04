@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mini_mind_quest/helpers/sound_manager.dart';
 
 class MathPuzzlesGame extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -30,7 +31,7 @@ class _MathPuzzlesGameState extends State<MathPuzzlesGame> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 10),
     );
     _generateProblem();
   }
@@ -51,8 +52,9 @@ class _MathPuzzlesGameState extends State<MathPuzzlesGame> {
     final Set<int> tempOptions = {_correctAnswer};
     while (tempOptions.length < 4) {
       int wrongOption = _correctAnswer + random.nextInt(5) - 2;
-      if (wrongOption != _correctAnswer && wrongOption > 0)
+      if (wrongOption != _correctAnswer && wrongOption > 0) {
         tempOptions.add(wrongOption);
+      }
     }
     _options = tempOptions.toList()..shuffle();
   }
@@ -60,14 +62,22 @@ class _MathPuzzlesGameState extends State<MathPuzzlesGame> {
   void _onAnswerTapped(int selectedAnswer) async {
     if (_feedbackColor != null) return;
 
+    // play tap sound on press
+    SoundManager.playTap();
+
     if (selectedAnswer == _correctAnswer) {
+      // correct answer
+      SoundManager.playCorrect();
+
       setState(() {
         _score++;
         _feedbackColor = Colors.green;
       });
 
       if (_score >= _winScore) {
+        // play victory sound + confetti
         _confettiController.play();
+
         await Future.delayed(const Duration(milliseconds: 1000));
         if (mounted) widget.onCompleted();
       } else {
@@ -81,6 +91,9 @@ class _MathPuzzlesGameState extends State<MathPuzzlesGame> {
         });
       }
     } else {
+      // wrong answer
+      SoundManager.playWrong();
+
       setState(() {
         _feedbackColor = Colors.red;
       });
@@ -138,7 +151,7 @@ class _MathPuzzlesGameState extends State<MathPuzzlesGame> {
               // Math Problem Box
               AnimatedContainer(
                 duration: const Duration(milliseconds: 400),
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -157,6 +170,7 @@ class _MathPuzzlesGameState extends State<MathPuzzlesGame> {
                 child: Text(
                   '$_num1 🍎 + $_num2 🍌 = ?',
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Colors.deepPurple,
                   ),

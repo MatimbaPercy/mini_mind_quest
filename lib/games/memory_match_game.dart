@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mini_mind_quest/helpers/sound_manager.dart';
 
 class MemoryMatchGame extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -26,7 +27,7 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
   void initState() {
     super.initState();
     _confettiController = ConfettiController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 10),
     );
     _setupGame();
   }
@@ -55,6 +56,8 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
   void _onCardTapped(GameCard card) {
     if (_isChecking || card.isMatched || card.isFlipped) return;
 
+    SoundManager.playTap();
+
     setState(() {
       card.isFlipped = true;
       if (_flippedCard1 == null) {
@@ -71,11 +74,13 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
     await Future.delayed(const Duration(milliseconds: 900));
 
     if (_flippedCard1!.emoji == _flippedCard2!.emoji) {
+      SoundManager.playCorrect();
       setState(() {
         _flippedCard1!.isMatched = true;
         _flippedCard2!.isMatched = true;
       });
     } else {
+      SoundManager.playWrong();
       setState(() {
         _flippedCard1!.isFlipped = false;
         _flippedCard2!.isFlipped = false;
@@ -99,6 +104,7 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // background
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -112,6 +118,8 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
             ),
           ),
         ),
+
+        // game board
         Center(
           child: GridView.builder(
             shrinkWrap: true,
@@ -164,6 +172,8 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
             },
           ),
         ),
+
+        // confetti
         Align(
           alignment: Alignment.center,
           child: ConfettiWidget(
@@ -178,6 +188,22 @@ class _MemoryMatchGameState extends State<MemoryMatchGame>
               Colors.purple,
               Colors.orange,
             ],
+          ),
+        ),
+
+        // mute/unmute button
+        Positioned(
+          top: 40,
+          right: 20,
+          child: IconButton(
+            icon: Icon(
+              SoundManager.isMuted ? Icons.volume_off : Icons.volume_up,
+              color: Colors.white,
+              size: 32,
+            ),
+            onPressed: () {
+              setState(() {});
+            },
           ),
         ),
       ],
